@@ -1,27 +1,56 @@
+
 <?php
 // ---- Telesom LearnHub configuration ----
-const DB_HOST = 'localhost';
-const DB_NAME = 'telesom_learnhub';
-const DB_USER = 'root';
-const DB_PASS = '';
-const APP_TZ = 'Africa/Mogadishu';          // time zone used for live classes
-const JITSI_BASE = 'https://meet.jit.si';    // video room provider for "Jitsi" live classes (use your own Jitsi server if you have one)
-const RESET_MODE = 'demo'; // 'demo' = show the reset link on screen (testing) | 'mail' = email it (needs a mail server)
 
-// ---- Payment settings ----
-// 'demo'   = payment is confirmed instantly (for testing / presentations)
-// 'manual' = learner sends money to the merchant number below and enters the transaction ID; an administrator confirms it
+const APP_TZ = 'Africa/Mogadishu';
+const JITSI_BASE = 'https://meet.jit.si';
+const RESET_MODE = 'demo';
+
 const PAYMENT_MODE = 'demo';
-const MERCHANT_ZAAD = '063-XXXXXXX';      // <-- put Telesom's real ZAAD merchant number
-const MERCHANT_EDAHAB = '065-XXXXXXX';    // <-- eDahab merchant number
-const MERCHANT_BANK = 'Bank: ______  ·  Account name: Telesom LearnHub  ·  Account no: ______';
+const MERCHANT_ZAAD = '063-XXXXXXX';
+const MERCHANT_EDAHAB = '065-XXXXXXX';
+const MERCHANT_BANK = 'Bank: ______ · Account name: Telesom LearnHub · Account no: ______';
 
 session_start();
+
 try {
-    $pdo = new PDO("mysql:host=".DB_HOST.";dbname=".DB_NAME.";charset=utf8mb4", DB_USER, DB_PASS,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-} catch (PDOException $ex) {
-    die('<h3>Database connection failed.</h3><p>Import <code>database/database.sql</code> and check <code>includes/config.php</code>.</p>');
+    // Railway database connection
+    $databaseUrl = getenv('DATABASE_URL');
+
+    if (!$databaseUrl) {
+        throw new RuntimeException('DATABASE_URL environment variable is missing.');
+    }
+
+    $db = parse_url($databaseUrl);
+
+    if (!$db || empty($db['host']) || empty($db['user']) || !isset($db['pass'])) {
+        throw new RuntimeException('Invalid database connection URL.');
+    }
+
+    $host = $db['host'];
+    $port = $db['port'] ?? 3306;
+    $name = ltrim($db['path'] ?? '', '/');
+    $user = urldecode($db['user']);
+    $pass = urldecode($db['pass']);
+
+    if ($name === '') {
+        throw new RuntimeException('Database name is missing.');
+    }
+
+    $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
+
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
+
+} catch (Throwable $ex) {
+    error_log('LearnHub database error: ' . $ex->getMessage());
+
+    http_response_code(500);
+    die('<h3>Database connection failed.</h3>
+    <p>Please check the Railway database configuration.</p>');
 }
 
 date_default_timezone_set(APP_TZ);
