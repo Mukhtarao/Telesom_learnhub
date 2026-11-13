@@ -15,8 +15,8 @@ session_start();
 
 try {
     // Railway database connection
-    $databaseUrl = getenv('DATABASE_URL');
-
+$databaseUrl = getenv('DATABASE_URL') ?: getenv('MYSQL_URL');
+    
     if (!$databaseUrl) {
         throw new RuntimeException('DATABASE_URL environment variable is missing.');
     }
