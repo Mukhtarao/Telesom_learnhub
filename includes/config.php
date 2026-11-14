@@ -10,11 +10,14 @@ const MERCHANT_ZAAD = '063-XXXXXXX';
 const MERCHANT_EDAHAB = '065-XXXXXXX';
 const MERCHANT_BANK = 'Bank: ______ · Account name: Telesom LearnHub · Account no: ______';
 
-session_start();
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 try {
     // Railway database connection
-$databaseUrl = getenv('DATABASE_URL') ?: getenv('MYSQL_URL');
+$databaseUrl = getenv('DATABASE_URL')
+    ?: getenv('MYSQL_PUBLIC_URL')
+    ?: getenv('MYSQL_URL');
     
     if (!$databaseUrl) {
         throw new RuntimeException('DATABASE_URL environment variable is missing.');
