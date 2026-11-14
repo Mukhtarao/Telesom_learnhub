@@ -178,13 +178,7 @@ function live_state($L){
     if ($n < $s) return 'upcoming';
     return $n <= $e ? 'live' : 'ended';
 }
-function live_can_join($L){ $st = live_state($L); return $st === 'live' || ($st === 'upcoming' && strtotime($L['start_at']) - time() <= 900); }
-function live_scope($u){
-    if ($u['role'] === 'admin') return ['1=1', []];
-    if ($u['role'] === 'instructor') return ['c.instructor_id=?', [$u['id']]];
-    if ($u['role'] === 'organization') return ['c.org_id=?', [$u['id']]];
-    return ["l.course_id IN (SELECT course_id FROM enrollments WHERE user_id=? AND status='active')", [$u['id']]];
-}
+
 function live_upcoming($u, $n = 3){
     [$cond, $p] = live_scope($u); $o = [];
     foreach (all("SELECT l.*, c.title ct FROM live_classes l JOIN courses c ON c.id=l.course_id WHERE $cond AND l.status IN ('scheduled','live') ORDER BY l.start_at LIMIT 40", $p) as $r) {
