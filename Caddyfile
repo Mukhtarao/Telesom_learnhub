@@ -1,14 +1,7 @@
 
-{
-    auto_https off
-}
-
 :{$PORT:8080} {
     root * /app
-
     encode gzip
-
     php_server
-
     file_server
 }
